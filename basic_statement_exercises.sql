@@ -23,9 +23,13 @@ SELECT name FROM albums WHERE artist='Pink Floyd';
 
 
 -- Q6) What is the year Sgt. Pepper's Lonely Hearts Club Band was released?
-SELECT * FROM albums;
+SELECT * FROM albums;-- just observe the table 
 
 SELECT release_date FROM albums WHERE name ="Sgt. Pepper's Lonely Hearts Club Band";
+
+-- OR
+
+SELECT release_date FROM albums WHERE name ='Sgt. Pepper\'s Lonely Hearts Club Band';
 
 -- Q7) What is the genre for the album Nevermind?
 SELECT genre FROM albums WHERE name ='Nevermind';
