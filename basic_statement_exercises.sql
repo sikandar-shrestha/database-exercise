@@ -3,19 +3,20 @@
 
 -- Q1) use the albums_db database.
 
-SHOW databases;
+SHOW databases; -- only to know the database
 USE albums_db;
 
 -- Q2) what is the primary key for the albums table?
 describe albums;
+select * from albums;-- no required if above code shows primary key
 -- field "id" is the primary key 
 
 -- Q3) what does the column named 'name' represent?
--- Ans: The column named 'name' has the string datatype and it does not accept NuLL data
+-- Ans: The name column represents album name
 SELECT name FROM albums;
 
 -- Q4) what do you think the sales column represents?
--- Ans: The column named 'sales' has the float datatype and it can accept NULL data also
+-- Ans: The sales column represents album sales
 SELECT Sales FROM albums;
 
 -- Q5) find the name of all albums by Pink Floyd
@@ -35,8 +36,17 @@ SELECT release_date FROM albums WHERE name ='Sgt. Pepper\'s Lonely Hearts Club B
 SELECT genre FROM albums WHERE name ='Nevermind';
 
 -- Q8) Which albums were released in the 1990s?
-SELECT name FROM albums WHERE release_date=1990;
+SELECT name FROM albums WHERE release_date>=1990 and release_date<2000;
+
+-- OR
+
+SELECT name FROM albums 
+WHERE release_date between 1990 and 2000 
+order by release_date desc;
 
 -- Q9) Which albums had less than 20 million certified sales? Rename this column as low_selling_albums.
-SELECT name AS low_selling_albums FROM albums WHERE sales<20;
+SELECT name AS low_selling_albums 
+FROM albums 
+WHERE sales<20 
+order by Sales;
 
