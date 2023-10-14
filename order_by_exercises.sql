@@ -29,7 +29,7 @@ order by first_name;
 -- In your comments, answer: What was the first and last name in the first row of the results? What was the first and last name of the last person in the table?
 
 select emp_no, first_name, last_name from employees 
-where first_name in ('Irena','Vidya') or first_name='Maya'
+where first_name in ('Irena','Vidya','Maya') 
 order by first_name, last_name;
 
 -- A: 1st row= Irena Acton
@@ -54,7 +54,7 @@ from employees
 where last_name like 'E%E'
 order by emp_no;
 
--- A: 709
+-- A: 899
 -- A: 10021 and Ramzi Erde
 -- A: 499648 and Tadahiro Erdo
 
@@ -65,7 +65,7 @@ order by emp_no;
 select * 
 from employees
 where last_name like 'E%E'
-order by hire_date;
+order by hire_date desc;
 
 -- A: 899
 -- A: Sergi Erde
