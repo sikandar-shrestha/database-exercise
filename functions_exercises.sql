@@ -12,14 +12,14 @@ show databases;
 use employees;
 
 
-select *, concat(first_name,' ',last_name) as full_name 
+select concat(first_name,' ',last_name) as full_name 
 from employees
 where last_name like 'e%e';
  
 
 -- Q3) Convert the names produced in your last query to all uppercase.
 
-select *, upper(concat(first_name,' ',last_name)) as full_name 
+select upper(concat(first_name,' ',last_name)) as full_name 
 from employees
 where last_name like 'e%e';
 
@@ -40,9 +40,12 @@ where last_name like 'e%e') as subquery;
 
 select * from employees;
 
-select *, datediff( NOW(),hire_date ) as day_working
+select *, datediff( NOW(),hire_date ) as num_days_at_company
 from employees
-where hire_date like '199%' and birth_date like '%-12-25';
+where 
+hire_date like '199%' 
+-- extract(year from hire_date) between 1990 and 1999
+and birth_date like '%-12-25';
 
 
 
@@ -56,6 +59,10 @@ select * from salaries;
 select min(salary), max(salary)
 from salaries;
 
+-- or
+
+select concat('$',min(salary)) as min_salary, concat('$',max(salary)) as max_salary
+from salaries;
 
 
 
@@ -85,7 +92,7 @@ from salaries;
 */
 
 
-select concat(lower(substr(first_name,1,1)),substr(last_name,1,4),'_',substr(birth_date,6,2),substr(birth_date,3,2)) as username
+select concat(lower(substr(first_name,1,1)),lower(substr(last_name,1,4)),'_',substr(birth_date,6,2),substr(birth_date,3,2)) as username
 ,first_name, last_name, birth_date
 from employees;
 
