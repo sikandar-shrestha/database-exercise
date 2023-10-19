@@ -13,15 +13,14 @@ DO NOT WORRY ABOUT DUPLICATE EMPLOYEES.
 use employees;
 
 select 
-		de.emp_no,
-		d.dept_no,
-        de.from_date,
-        de.to_date,
+		emp_no,
+		dept_no,
+        from_date,
+        to_date,
 		if(to_date>now(),1,0) As 'is_current_employee'
 
 from dept_emp de
-join departments d
-	using(dept_no)
+
 order by de.emp_no asc
 ;
 
@@ -131,16 +130,14 @@ group by department_groups
 -- BQ1) Remove duplicate employees from exercise 1.
 
 select 
-		 distinct de.emp_no,
-		d.dept_no,
-        de.from_date,
-        de.to_date,
+		 distinct emp_no,
+		dept_no,
+        from_date,
+        to_date,
 		if(to_date>now(),1,0) As 'is_current_employee'
 
-from dept_emp de
-join departments d
-	using(dept_no)
-order by de.emp_no asc
+from dept_emp 
+order by emp_no asc
 ;
 
 
