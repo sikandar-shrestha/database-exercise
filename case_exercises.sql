@@ -14,14 +14,17 @@ use employees;
 
 select 
 		emp_no,
+        concat(first_name,' ',last_name) as full_name,
 		dept_no,
         from_date,
         to_date,
 		if(to_date>now(),1,0) As 'is_current_employee'
 
-from dept_emp de
+from dept_emp 
+	join employees 
+		using (emp_no)
 
-order by de.emp_no asc
+order by emp_no asc
 ;
 
 
@@ -42,10 +45,27 @@ select
 		concat(first_name,' ',last_name),
         to_date,
         CASE 
-			WHEN left(last_name,1) between 'A' and 'H' then 'A-H'
+			WHEN left(last_name,1) between 'A' and 'H' then 'A-H' 
             WHEN left(last_name,1) between 'I' and 'Q' then 'I-Q'
-            WHEN left(last_name,1) between 'R' and 'Z' then 'R-Z'
-		    ELSE 'other'
+           -- WHEN left(last_name,1) between 'R' and 'Z' then 'R-Z'
+		    ELSE 'R-Z'
+		END AS alpha_group
+from employees
+	join dept_emp
+		using(emp_no)
+    
+    ;
+
+-- or 
+
+select 
+		concat(first_name,' ',last_name),
+        to_date,
+        CASE 
+			WHEN substr(last_name,1) <= 'H'then 'A-H' 
+            WHEN left(last_name,1) <= 'Q' then 'I-Q'
+           -- WHEN left(last_name,1) between 'R' and 'Z' then 'R-Z'
+		    ELSE 'R-Z'
 		END AS alpha_group
 from employees
 	join dept_emp
@@ -56,33 +76,29 @@ from employees
 
 
 
+
 /*
 Q3) How many employees (current or previous) were born in each decade?
 */
 
 
-select *
-from employees
-order by birth_date asc
-;
+select min(birth_date),max(birth_date)
+from employees;
+
+
+
 
 
 select
-		count(*) as 'no_decade_employees',
 		case
 			when birth_date like '195%' then '50s'
             when birth_date like '196%' then '60s'
-            when birth_date like '197%' then '70s'
-            when birth_date like '198%' then '80s'
-            when birth_date like '199%' then '90s'
-            when birth_date like '200%' then '2000s'
-            when birth_date like '201%' then '2010s'
-            when birth_date like '220%' then '2020s'
             else 'other'
-		end AS 'Decade'
+		end AS 'birth_Decade'
+        ,count(*) as 'no_decade_employees'
 from employees
-group by Decade
-order by Decade;
+group by birth_Decade
+;
 
 
 
@@ -107,10 +123,9 @@ select
             when d.dept_name in ('Sales','Marketing') then 'Sales & Marketing'
             when d.dept_name in ('Production','Quality Management') then 'Prod & QM'
             when d.dept_name in ('Finance','Human Resources') then 'Finance & HR'
-            when d.dept_name='Customer Service' then 'Customer Service'
-            else 'others'
+            else 'Customer Service'
 		end AS 'department_groups'
-        ,avg(s.salary) 
+        ,round(avg(s.salary),2) as avg_salary
 from 
 	departments d
     join dept_emp de
@@ -129,15 +144,58 @@ group by department_groups
 
 -- BQ1) Remove duplicate employees from exercise 1.
 
+-- finding max to_date for each employees/using this as our inner query
 select 
-		 distinct emp_no,
-		dept_no,
-        from_date,
-        to_date,
-		if(to_date>now(),1,0) As 'is_current_employee'
-
-from dept_emp 
-order by emp_no asc
+	emp_no,
+    max(to_date)
+from dept_emp
+group by emp_no
 ;
 
 
+select 
+		e.emp_no,
+        concat(e.first_name,' ',e.last_name) as full_name,
+		de.dept_no,
+        de.from_date,
+        de.to_date,
+		if(de.to_date>now(),1,0) As 'is_current_employee'
+
+from employees e
+	join dept_emp de
+		using (emp_no)
+	join 
+			(
+            select 
+					emp_no,
+					max(to_date) as to_date
+			from dept_emp
+			group by emp_no
+            
+            ) as a
+            on e.emp_no=a.emp_no
+            and de.to_date=a.to_date
+;
+
+
+## Another Way
+
+
+select 
+	emp_no,
+    dept_no,
+    concat(first_name,' ',last_name) as full_name,
+    to_date,
+    if(to_date>curdate(),1,0) as 'is_current_employee'
+from 
+	employees 
+join 
+	dept_emp 
+    using (emp_no)
+where (emp_no,to_date) in (
+							select emp_no,max(to_date)
+                            from dept_emp
+                            group by emp_no
+						  )
+	;	
+    
