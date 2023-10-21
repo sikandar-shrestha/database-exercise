@@ -22,10 +22,15 @@ Q2) Use join, left join, and right join to combine results from the users and ro
 Before you run each query, guess the expected number of results.
 */
 
+-- will return all users who have roles
+-- due to no nulls being returned from inner 
+
+
+
 -- INNER JOIN
 SELECT r.name as roles_name, u.name as users_name, email, role_id
 FROM roles r
-JOIN users u
+INNER JOIN users u
 ON r.id=u.id;
 
 
@@ -100,13 +105,16 @@ describe titles;
 
 -- Associative Tables are : departments,dept_manager, employees
 select
-		d.dept_name as department_Name, concat(e.first_name,' ',e.last_name) as department_manager
+		d.dept_name as department_Name, 
+        concat(e.first_name,' ',e.last_name) as department_manager
 from departments d
 inner join dept_manager dm
 	on d.dept_no=dm.dept_no
 inner join employees e
 	on dm.emp_no=e.emp_no
+    -- and dm.to_date>NOW()
 where dm.to_date='9999-01-01'
+-- WHERE dm.to_date>now()
 order by department_Name asc ;
 
 
@@ -133,9 +141,10 @@ select d.dept_name, concat(e.first_name,' ',e.last_name) as Manager_Name,e.gende
 from departments d
 join dept_manager dm
 	on d.dept_no=dm.dept_no
+        and dm.to_date> NOW()
 join employees e
 	on dm.emp_no=e.emp_no
-where e.gender='f'
+where e.gender='F'
 group by d.dept_name;
 
 
@@ -169,6 +178,30 @@ group by t.title
 order by t.title ;
 
 
+
+-- or
+
+select t.title, count(*) as Count
+from titles t
+join dept_emp de
+	on t.emp_no=de.emp_no
+    and t.to_date>NOW() and de.to_date>NOW()
+join departments d
+	on de.dept_no=d.dept_no
+WHERE d.dept_name= 'Customer Service'
+group by t.title
+order by t.title ;
+
+
+
+
+
+
+
+
+
+
+
 /*
 -- 5. Find the current salary of all current managers.
 
@@ -189,7 +222,9 @@ Sales              | Hauke Zhang       | 101987
 -- tables (departments, dept_manager, employees, salaries)
 
 
-select d.dept_name, concat(e.first_name,' ',e.last_name) as Name,s.salary as Salary
+select d.dept_name, 
+		concat(e.first_name,' ',e.last_name) as Name,
+		s.salary as Salary
 from departments d
 join dept_manager dm
 	on d.dept_no=dm.dept_no
@@ -200,6 +235,30 @@ join salaries s
 where s.to_date='9999-01-01' and dm.to_date='9999-01-01'
 order by d.dept_name
 ;
+
+
+-- or
+
+
+select d.dept_name, 
+		concat(e.first_name,' ',e.last_name) as Name,
+		s.salary as Salary
+from departments d
+join dept_manager dm
+	on d.dept_no=dm.dept_no
+		and dm.to_date>NOW()
+join  employees e
+	on dm.emp_no=e.emp_no
+join salaries s
+	on e.emp_no=s.emp_no and s.to_date>NOW()
+order by d.dept_name
+;
+
+
+
+
+
+
 
 /*
 -- 6. Find the number of current employees in each department.
@@ -244,14 +303,18 @@ order by d.dept_no;
 -- Associative tables : departments,dept_emp,salaries
 
 
-select d.dept_name, avg(s.salary) as average_salary
+select 
+	d.dept_name, 
+    avg(s.salary) as average_salary
 from departments d
 join dept_emp de
 	on d.dept_no=de.dept_no
+    and de.to_date>NOW()
 join salaries s
 	on de.emp_no=s.emp_no
+    AND s.to_date>NOW()
 -- where s.to_date='9999-01-01'
-where s.to_date>curdate()
+-- where s.to_date>curdate()
 group by d.dept_name
 order by average_salary desc
 limit 1;
@@ -271,7 +334,7 @@ limit 1;
 */
 
 
-select e.first_name,e.last_name,s.salary
+select e.first_name,e.last_name
 from salaries s
 join employees e
 	on s.emp_no=e.emp_no
@@ -283,6 +346,10 @@ where d.dept_name='Marketing'
 order by s.salary desc
 limit 1
 ;
+
+
+
+
 
 
 
@@ -305,7 +372,7 @@ join employees e
 	on dm.emp_no=e.emp_no
 join salaries s
 	on e.emp_no=s.emp_no
-where dm.to_date='9999-01-01'
+where dm.to_date='9999-01-01' AND s.to_date>NOW()
 order by s.salary desc
 limit 1;
 
@@ -340,7 +407,8 @@ limit 1;
 */
 
 
-select d.dept_name,round(avg(s.salary),0) as average_salary
+select d.dept_name,
+		round(avg(s.salary),0) as average_salary
 from departments d
 join dept_emp de
 	on d.dept_no=de.dept_no
@@ -374,22 +442,48 @@ Employee Name | Department Name  |  Manager Name
  -- Associative tables:- employees,dept_emp,departments,dept_manager,employees e2
  
  
- select 
+select 
 	concat(e.first_name,' ',e.last_name)  as Employee_Name,
     d.dept_name as Department_Name,
     concat(e2.first_name,' ',e2.last_name) as Manager_Name
     
- from employees e
- join dept_emp de
+from employees e
+join dept_emp de
 	on e.emp_no=de.emp_no
 join departments d
 	on de.dept_no=d.dept_no
 join dept_manager dm
 	on d.dept_no=dm.dept_no
-join employees e2
+join employees e2  -- join employees again in managers to get manager names
 	on dm.emp_no=e2.emp_no
 where dm.to_date > curdate() and de.to_date > curdate()
 order by Department_Name asc;
+
+
+
+
+## Subquery Method 
+
+select 
+	concat(e.first_name,' ',e.last_name)  as Employee_Name,
+    d.dept_name as Department_Name,
+    concat(e2.first_name,' ',e2.last_name) as Manager_Name
+    
+from employees e
+join dept_emp de
+	on e.emp_no=de.emp_no
+    and de.to_date>NOW()
+join departments d
+	on de.dept_no=d.dept_no
+join (
+		select concat(e.first_name,' ',e.last_name)
+        from dept_manager dm
+        join employees e2
+			on dm.emp_no=e2.emp_no
+            and dm.to_date>NOW()
+		) as m
+        on d.emp_no=m.emp_no
+where
  
  
  

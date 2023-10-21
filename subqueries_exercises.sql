@@ -280,31 +280,51 @@ join
 
 -- BQ4) Who is the highest paid employee within each department.
 
+-- max salary
+select max(salary)
+from salaries;
+
+-- group departments
+select *
+from departments
+group by dept_name;
+
+
+select max(salary),dept_no
+from dept_emp
+join salaries
+	using(emp_no)
+group by dept_no;
+
+
+
 
 select 
-	d.dept_name as 'department name',
-    d.dept_no,
-    e.first_name,
-    e.last_name,
-    a.max_salary
-
-from employees e
+	
+	d.dept_no,
+    d.dept_name,
+    a.m as max_sal
+   -- concat(e.first_name,' ',e.last_name) as fn
+from departments d
 join dept_emp de
-	using(emp_no)
-join departments d
-	using(dept_no)
-join 
-	(
-    select de2.dept_no, max(s.salary) as max_salary
-    from salaries s
-    join dept_emp de2
-		on s.emp_no=de2.emp_no
-	group by de2.dept_no
-    )a
-	on d.dept_no=a.dept_no
-group by d.dept_no and d.dept_name
+	on d.dept_no=de.dept_no
+join employees e
+	on de.emp_no=e.emp_no
+-- join salaries s
+	-- on e.emp_no=s.emp_no
+ join (
+			select max(salary) as m, emp_no
+                from salaries 
+                join dept_emp 
+					using (emp_no)
+				group by dept_no
+                )a
+		on e.emp_no=a.emp_no
+group by d.dept_name,max_sal;
+	
 
-    ;
+
+
     
     
 
