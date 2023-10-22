@@ -22,16 +22,11 @@ Q1) Using the example from the lesson, create a temporary table called employees
     If you see "Access denied for user ...", it means that the query was attempting to write a new table to a database that you can only read.
 
 
-													
 a) Add a column named full_name to this table.
    It should be a VARCHAR whose length is the sum of the lengths of the first name and last name columns.
-
-
 b) Update the table so that the full_name column contains the correct data.
-   Remove the first_name and last_name columns from the table.
-
-
-c) What is another way you could have ended up with this same table?
+c) Remove the first_name and last_name columns from the table.
+d) What is another way you could have ended up with this same table?
 */
 
 
@@ -46,24 +41,25 @@ create temporary table employees_with_departments AS
 
 select * from employees_with_departments;
 													
--- a)
+-- a) ---------------
 alter table employees_with_departments add full_name varchar(30);
 
 select * from employees_with_departments;
-
+-- b) --------------
 update employees_with_departments set full_name=concat(first_name,' ',last_name);
 
 select * from employees_with_departments;
 
 
--- b
+-- c -----------------------
 alter table employees_with_departments drop column first_name, drop column last_name;
 
 select * from employees_with_departments;
 
 
--- c
+-- d ----------------------------
 
+-- drop table [table name] , this command format will have ended up the table.
 
 
 
@@ -76,6 +72,8 @@ Q2) Create a temporary table based on the payment table from the sakila database
 
 select * from sakila.payment;
 
+
+-- 1st way -------------------
 create temporary table cent_payment as
 										select amount
                                         from sakila.payment
@@ -93,8 +91,8 @@ select * from cent_payment;
 
 
 
---  or ------------------------------
-
+--  2nd way ------------------------------
+drop table cent_payment;
 create temporary table amt_to_cent as
 										select 
                                         amount,
@@ -104,11 +102,57 @@ create temporary table amt_to_cent as
 select * from amt_to_cent;
                                         
                                         
+-- 3rd way ------------------------------------
+
+drop table amt_to_cent;
+
+create temporary table payment_in_cent as 
+select 
+		payment_id,
+        customer_id,
+        staff_id,
+        rental_id,
+        amount,
+        amount*100 as amt_in_cents
+from sakila.payment;
+
+select * from payment_in_cent;
+
+alter table payment_in_cent modify amt_in_cents int;
+
+select * from payment_in_cent;
 
 
 
+-- 4th way----------------
+
+drop table payment_in_cent;
+
+create temporary table payment_in_ct as
+select 
+		payment_id,
+        customer_id,
+        staff_id,
+        rental_id,
+        payment_date,
+        amount
+from sakila.payment;
+
+select * from payment_in_ct;
+
+-- alter the column 'amount'
+alter table payment_in_ct modify amount dec(10,2); -- dec decimal place
+
+update payment_in_ct set amount=amount*100;
+
+select * from payment_in_ct;
 
 
+alter table payment_in_ct modify amount int not null;
+
+select * from payment_in_ct;
+
+        
 /*
 Q3) Go back to the employees database. 
     Find out how the current average pay in each department compares to the overall current pay for everyone at the company.
@@ -164,6 +208,82 @@ from (
 -- max z_score is 0.9728927285775602 (Sales)
         
 -- Hence, in terms of salary , Sales is the best department and Human Resources is worst department.
+
+
+##   Another way ---------------
+
+-- overall current avg salary and standard deviation
+select 
+		avg(salary),
+        std(salary)
+from employees.salaries
+where to_date>now();
+
+-- A: avg(salary)= 72012.2359
+-- 	  std(salary)= 17309.95933634675
+
+create temporary table overall_aggregates as (
+select 
+		avg(salary) as avg_sal,
+        std(salary) as std_sal
+from employees.salaries
+where to_date>now()
+);
+
+select * from overall_aggregates;
+
+
+
+create temporary table dept_current_sal_info as (
+select 
+		d.dept_name,
+        avg(s.salary) as dept_avg
+from employees.salaries s
+join employees.dept_emp de
+	on s.emp_no=de.emp_no
+    and s.to_date>now()
+    and de.to_date>now()
+join employees.departments d
+	on de.dept_no=d.dept_no
+group by d.dept_name
+)
+;
+
+
+select * from dept_current_sal_info;
+
+-- drop table dept_current_sal_info;
+
+-- add columns(overall_avg + overall_std) on 'dept_current_sal_info'
+
+alter table dept_current_sal_info add overall_avg float(10,2);
+alter table dept_current_sal_info add overall_std float(10,2);
+alter table dept_current_sal_info add z_score float(10,2);
+
+select * from dept_current_sal_info;
+
+-- update columns (overall_avg + overall_std)
+
+
+update dept_current_sal_info set overall_avg=(select avg_sal from overall_aggregates);
+update dept_current_sal_info set overall_std=(select std_sal from overall_aggregates);
+
+select * from dept_current_sal_info;
+
+update dept_current_sal_info set z_score = (dept_avg-overall_avg)/overall_std;
+
+select * from dept_current_sal_info;
+
+
+select * from dept_current_sal_info 
+order by z_score desc;
+
+-- min z_score is -0.47 (Human Resources)
+-- max z_score is 0.97 (Sales)
+        
+-- Hence, in terms of salary , Sales is the best department and Human Resources is worst department.
+
+
 
 
 

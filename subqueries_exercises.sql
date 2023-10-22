@@ -150,16 +150,14 @@ where salary >
 -- Hint It's a good practice to write out all of the small queries that you can. 
 --      Add a comment above the query showing the number of rows returned. 
 --      You will use this number (or the query that produced it) in other, larger queries.
-select max(salary) as sal_max
-from salaries
-where to_date>curdate();
 
 
-select std(salary) as sal_std
-from salaries;
+-- 1st way 
 
-
-
+select round((max(salary)-std(salary)),0) 
+			from salaries
+            where to_date>curdate();
+-- A: cutoff salary= 140910
 
 select count(*) as num_within_std
 from salaries
@@ -170,9 +168,15 @@ where salary>=
             where to_date>curdate()
             )
 		and to_date>now();
-  -- A : 83          
+  -- A : 83 
+  
+  select count(*)
+  from salaries
+  where to_date>now();
 
-# for percentage
+-- 240124
+
+# The % for above the cutoff salary
 
 select 
 		(num_within_std*100/total_current_salary) as 'percentage within std (%)'
@@ -199,14 +203,15 @@ from
 
 
 
--- or 83/total *100
+-- 2nd way          83/total *100
 
 select 
 		(
 			select count(*) as num_within_std
 from salaries
 where salary>=
-			( -- cutoff point ,~140k
+			( 
+            -- cutoff point ,~140k
             select (max(salary)-std(salary)) 
 			from salaries
             where to_date>curdate()
@@ -218,7 +223,8 @@ where salary>=
 from salaries
 where to_date>now()
 )  -- 240124
-*100;
+*100
+;
 
 
 
@@ -275,20 +281,12 @@ join
                 )
     ) m
     on de.emp_no=m.emp_no;
+    
+    -- A : Sales(Tokuyasu Pesch)
 
 
 
 -- BQ4) Who is the highest paid employee within each department.
-
--- max salary
-select max(salary)
-from salaries;
-
--- group departments
-select *
-from departments
-group by dept_name;
-
 
 select max(salary),dept_no
 from dept_emp
@@ -298,38 +296,39 @@ group by dept_no;
 
 
 
-
-select 
-	
+SELECT
 	d.dept_no,
-    d.dept_name,
-    a.m as max_sal
-   -- concat(e.first_name,' ',e.last_name) as fn
-from departments d
-join dept_emp de
-	on d.dept_no=de.dept_no
-join employees e
-	on de.emp_no=e.emp_no
--- join salaries s
-	-- on e.emp_no=s.emp_no
- join (
-			select max(salary) as m, emp_no
-                from salaries 
-                join dept_emp 
-					using (emp_no)
-				group by dept_no
-                )a
-		on e.emp_no=a.emp_no
-group by d.dept_name,max_sal;
-	
+    d.dept_name AS department_name,
+    e.first_name,
+    e.last_name,
+    s.salary
+FROM
+    departments d
+JOIN dept_emp de ON d.dept_no = de.dept_no
+JOIN employees e ON de.emp_no = e.emp_no
+JOIN salaries s ON e.emp_no = s.emp_no
+WHERE
+    s.to_date > NOW()
+    AND (de.dept_no, s.salary) IN (
+        SELECT de1.dept_no, MAX(s1.salary)
+        FROM salaries s1 join dept_emp de1 using (emp_no)
+        WHERE s1.to_date > NOW() and de1.to_date>now()
+        GROUP BY de1.dept_no
+    )
+    ;
 
-
-
-    
-    
-
-
-
+/* Answer:-
+dept_no,department_name,first_name,last_name,salary
+'d009','Customer Service','Vidya','Hanabata','144866'
+'d008','Research','Ramachenga','Soicher','130211'
+'d007','Sales','Tokuyasu','Pesch','158220'
+'d006','Quality Management','Shin','Luck','132103'
+'d005','Development','Khosrow','Sgarro','144434'
+'d004','Production','Youjian','Cronau','138273'
+'d003','Human Resources','Yinlin','Flowers','141953'
+'d002','Finance','Lunjin','Swick','142395'
+'d001','Marketing','Akemi','Warwick','145128'
+*/
 
 
 
